@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Menu, X, Code, Laptop, Server, Github, ExternalLink, Mail, Phone, MapPin, 
-  ChevronDown, Star, Users, Coffee, Award, Download, Send, ArrowUp, 
+import {
+  Menu, X, Code, Laptop, Server, Github, ExternalLink, Mail, Phone, MapPin,
+  ChevronDown, Star, Users, Coffee, Award, Download, Send, ArrowUp,
   Globe, Palette, Zap, Database, Monitor, Smartphone, Cloud, Shield,
   Play, Pause, Eye, GitBranch, Calendar, Clock
 } from 'lucide-react';
@@ -15,6 +15,7 @@ const Portfolio = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [hoveredProject, setHoveredProject] = useState(null);
+  const [services, setServices] = useState([])
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -122,10 +123,39 @@ const Portfolio = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Thank you for your message! This is a demo form.');
-    setFormData({ name: '', email: '', message: '' });
+    try {
+      const res = await fetch('https://portfolio-backend-1-cb82.onrender.com/api/v1/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      // Show thanks message in button for 5 seconds
+      const sendBtn = document.querySelector('button[type="submit"]');
+      if (sendBtn) {
+        const originalText = sendBtn.textContent;
+        sendBtn.textContent = "Thanks for contacting!";
+        sendBtn.disabled = true;
+        setTimeout(() => {
+          sendBtn.textContent = originalText;
+          sendBtn.disabled = false;
+        }, 5000);
+      }
+      setFormData({ name: '', email: '', message: '' });
+
+      if (data.success) {
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        console.log(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      alert('An error occurred. Please try again.');
+    }
   };
 
   const skills = [
@@ -238,51 +268,23 @@ const Portfolio = () => {
     { icon: Coffee, label: 'Cups of Coffee', value: '500+', color: 'text-amber-400' },
     { icon: Award, label: 'Certifications', value: '5+', color: 'text-blue-400' }
   ];
-
-  const services = [
-    {
-      icon: Code,
-      title: 'Frontend Development',
-      description: 'Creating beautiful, responsive, and interactive user interfaces using modern technologies and best practices.',
-      features: ['React & Next.js Development', 'Responsive Web Design', 'UI/UX Implementation', 'Performance Optimization', 'Cross-browser Compatibility'],
-      price: 'Starting from $500'
-    },
-    {
-      icon: Server,
-      title: 'Backend Development',
-      description: 'Building robust, scalable server-side applications with secure APIs and efficient database management.',
-      features: ['RESTful API Development', 'Database Design & Management', 'Authentication & Authorization', 'Server Architecture', 'Third-party Integrations'],
-      price: 'Starting from $600'
-    },
-    {
-      icon: Laptop,
-      title: 'Full-Stack Solutions',
-      description: 'Complete web application development from concept to deployment, handling both frontend and backend.',
-      features: ['End-to-End Development', 'Database Integration', 'API Development', 'Deployment & Hosting', 'Maintenance & Support'],
-      price: 'Starting from $1000'
+  async function ServicesApi() {
+    try {
+      const res = await fetch("https://portfolio-backend-1-cb82.onrender.com/api/v1/service/all");
+      const data = await res.json();
+      console.log(data.services); // ✅ correct key
+      setServices(data.services); // ✅ set only the services array
+    } catch (error) {
+      console.error("Error fetching services:", error);
     }
-  ];
+  }
 
-  const testimonials = [
-    {
-      name: 'Rahul Sharma',
-      role: 'CEO, Tech Solutions',
-      avatar: Users,
-      text: 'Shuaib delivered an excellent web application that exceeded our expectations. Professional work and great communication.'
-    },
-    {
-      name: 'Priya Gupta',
-      role: 'Marketing Director',
-      avatar: Star,
-      text: 'Outstanding developer! The website is fast, responsive, and exactly what we needed for our business.'
-    },
-    {
-      name: 'Amit Kumar',
-      role: 'Startup Founder',
-      avatar: Award,
-      text: 'Great experience working with Shuaib. He understood our requirements perfectly and delivered on time.'
-    }
-  ];
+  useEffect(() => {
+    ServicesApi();
+  }, []);
+
+
+
 
   const ProjectModal = ({ project, onClose }) => (
     <AnimatePresence>
@@ -394,9 +396,8 @@ const Portfolio = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className={`fixed w-full z-40 transition-all duration-300 ${
-        isScrolled ? 'bg-slate-900/95 backdrop-blur-sm shadow-lg' : 'bg-transparent'
-      }`}>
+      <nav className={`fixed w-full z-40 transition-all duration-300 ${isScrolled ? 'bg-slate-900/95 backdrop-blur-sm shadow-lg' : 'bg-transparent'
+        }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="text-xl sm:text-2xl font-bold text-white cursor-pointer" onClick={() => scrollToSection('home')}>
@@ -409,11 +410,10 @@ const Portfolio = () => {
                 <button
                   key={item}
                   onClick={() => scrollToSection(item)}
-                  className={`capitalize text-sm font-medium transition-colors hover:scale-105 ${
-                    activeSection === item
-                      ? 'text-purple-400'
-                      : 'text-gray-300 hover:text-white'
-                  }`}
+                  className={`capitalize text-sm font-medium transition-colors hover:scale-105 ${activeSection === item
+                    ? 'text-purple-400'
+                    : 'text-gray-300 hover:text-white'
+                    }`}
                 >
                   {item}
                 </button>
@@ -483,7 +483,7 @@ const Portfolio = () => {
           >
             <Code className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-purple-400 mx-auto" />
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -674,6 +674,7 @@ const Portfolio = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  onClick={() => { window.open('/path-to-cv.pdf', '_blank'); }}
                 >
                   Download CV
                 </motion.button>
@@ -757,7 +758,7 @@ const Portfolio = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12"
           >
-            {['All', 'Web App', 'API', 'Dashboard', 'Mobile App', 'Security', 'AI/ML'].map((filter) => (
+            {['web'].map((filter) => (
               <motion.button
                 key={filter}
                 whileHover={{ scale: 1.05 }}
@@ -931,9 +932,9 @@ const Portfolio = () => {
       </section>
 
       {/* Project Modal */}
-      <ProjectModal 
-        project={selectedProject} 
-        onClose={() => setSelectedProject(null)} 
+      <ProjectModal
+        project={selectedProject}
+        onClose={() => setSelectedProject(null)}
       />
 
       {/* Services Section */}
@@ -971,7 +972,7 @@ const Portfolio = () => {
                   transition={{ duration: 0.5 }}
                   className="w-16 h-16 bg-purple-600/20 rounded-lg flex items-center justify-center mb-6"
                 >
-                  <service.icon className="w-8 h-8 text-purple-400" />
+                  <span className="text-3xl">{service.icon}</span>
                 </motion.div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-4">{service.title}</h3>
                 <p className="text-gray-300 mb-6 text-sm sm:text-base leading-relaxed">{service.description}</p>
@@ -987,7 +988,7 @@ const Portfolio = () => {
 
                 <div className="pt-4 border-t border-slate-600">
                   <div className="flex justify-between items-center">
-                    <span className="text-purple-400 font-semibold text-sm">{service.price}</span>
+                    <span className="text-purple-400 font-semibold text-sm">{service.price}$</span>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -1003,56 +1004,7 @@ const Portfolio = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-12 sm:py-20 bg-slate-800/30">
-        <div className="max-w-7xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">What Clients Say</h2>
-            <p className="text-lg sm:text-xl text-gray-300 px-4">
-              Feedback from satisfied clients
-            </p>
-          </motion.div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
-          >
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 hover:border-purple-500/50 transition-all duration-300"
-              >
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mr-3">
-                    <testimonial.avatar className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-semibold">{testimonial.name}</h4>
-                    <p className="text-gray-400 text-sm">{testimonial.role}</p>
-                  </div>
-                </div>
-                <p className="text-gray-300 text-sm italic mb-4">"{testimonial.text}"</p>
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
 
       {/* Contact Section */}
       <section id="contact" className="py-12 sm:py-20">
@@ -1085,9 +1037,9 @@ const Portfolio = () => {
 
               <div className="space-y-4 sm:space-y-6">
                 {[
-                  { icon: Mail, text: 'mohdshuaib@example.com', href: 'mailto:mohdshuaib@example.com' },
-                  { icon: Phone, text: '+91 98765 43210', href: 'tel:+919876543210' },
-                  { icon: MapPin, text: 'Agra, Uttar Pradesh, India', href: '#' }
+                  { icon: Mail, text: 'heyshuaib43@gmail.com', href: 'mailto:heyshuaib43@gmail.com' },
+                  { icon: Phone, text: '+91 8979302837', href: 'tel:+918979302837' },
+                  { icon: MapPin, text: 'Meerut, Uttar Pradesh, India', }
                 ].map((contact, index) => (
                   <motion.a
                     key={index}
@@ -1117,7 +1069,7 @@ const Portfolio = () => {
                     { icon: Github, label: 'GitHub', href: '#' },
                     { icon: Mail, label: 'Email', href: 'mailto:mohdshuaib@example.com' },
                     { icon: Globe, label: 'Website', href: '#' },
-                    { icon: Phone, label: 'Phone', href: 'tel:+919876543210' }
+                    { icon: Phone, label: 'Phone', href: 'tel:+918979403827' }
                   ].map((social, index) => (
                     <motion.a
                       key={index}
